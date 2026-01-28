@@ -17,7 +17,7 @@ const fieldSchema = new mongoose.Schema({
         },
     },
     capacity: {
-        type: Number,
+        type: String,
         required: [true, 'La capacidad del campo es obligatoria'],
         enum: {
             values: ['FUTBOL_5', 'FUTBOL_7', 'FUTBOL_11'],
@@ -44,3 +44,11 @@ const fieldSchema = new mongoose.Schema({
         default: true,
     },
 });
+
+// Indices para optimizar la busqueda
+fieldSchema.index({isActive: 1});
+fieldSchema.index({fieldName: 1});
+fieldSchema.index({fieldName: 1, isActive: 1});
+
+//exportamos el modelo con el nombre Field
+export default mongoose.model('Field', fieldSchema);
