@@ -9,6 +9,7 @@ import { version } from 'mongoose';
 
 //Rutas
 import fieldRoutes from '../src/fields/field.router.js'
+import { dbConnection } from './db.js';
 
 const BASE_URL = '/kinalSportAdmin/v1';
 
@@ -37,6 +38,7 @@ const initServer = async (app) => {
     
     try {
         //Configuracion de los middlewares (Mi aplicaion)
+        dbConnection();
         middlewares(app);
         routes(app);
 
