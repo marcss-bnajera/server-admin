@@ -1,58 +1,87 @@
 'use strict';
 
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
-const reservationSchema = new mongoose.Schema({
-    reservationName: {
-        type: String,
-        required: true,
-        trim: true,
-        maxLength: [100, 'El nombre de la reservacion no puede tener mas de 100 caracteres'],
+const reservationSchema = mongoose.Schema(
+  {
+    userId: {
+      type: String,
+      required: [true, 'El ID del usuario es requerido'],
     },
-    reservationType: {
-        type: String,
-        required: [true, 'El tipo de reservacion es obligatorio'],
-        enum: {
-            values: ['PARTICULAR', 'GRUPAL'],
-            message: 'Tipo de reservacion no valido',
-        },
+    fieldId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Field',
+      required: [true, 'El ID del campo es requerido'],
     },
-    reservationDate: {
-        type: Date,
-        required: [true, 'La fecha de la reservacion es obligatoria'],
+    startTime: {
+      type: Date,
+      required: [true, 'La hora de inicio es requerida'],
     },
-    durationHours: {
-        type: Number,
-        required: [true, 'La duracion en horas es obligatoria'],
-        min: [1, 'La duracion debe ser al menos de 1 hora'],
-        max: [8, 'La duracion no puede exceder las 8 horas'],
+    endTime: {
+      type: Date,
+      required: [true, 'La hora de fin es requerida'],
     },
-    typeOfField: {
-        type: String,
-        required: [true, 'El tipo de campo es obligatorio'],
-        enum: {
-            values: ['NATURAL', 'SINTETICA', 'CONCRETO'],
-            message: 'Tipo de campo no valido',
-        },
+    status: {
+      type: String,
+      enum: {
+        values: ['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED', 'NO_SHOW'],
+        message: 'Estado no válido',
+      },
+      default: 'PENDING',
     },
-    nameOfTheResponsible: {
-        type: String,
-        required: [true, 'El nombre del responsable es obligatorio'],
-        trim: true,
-        maxLength: [100, 'El nombre del responsable no puede tener mas de 100 caracteres'],
+    confirmation: {
+      confirmedAt: Date,
+      confirmedBy: String,
     },
-    numberPhone: {
-        type: String,
-        required: [true, 'El numero telefonico es obligatorio'],
-        trim: true,
-        maxLength: [15, 'El numero telefonico no puede tener mas de 15 caracteres'],
+    lastModifiedBy: {
+      type: String,
+      default: null,
     },
-    typeOfPayment: {
-        type: String,
-        required: [true, 'El tipo de pago es obligatorio'],
-        enum: {
-            values: ['EFECTIVO', 'TARJETA_CREDITO', 'TARJETA_DEBITO'],
-            message: 'Tipo de pago no valido',
-        },
-    },
+  },
+  {
+    timestamps: true,
+    versionKey: false,
+  }
+);
+
+reservationSchema.index({ userId: 1 });
+reservationSchema.index({ fieldId: 1 });
+reservationSchema.index({ startTime: 1 });
+reservationSchema.index({ status: 1 });
+reservationSchema.index({ startTime: 1, fieldId: 1 });
+reservationSchema.index({ startTime: -1, status: 1 });
+
+reservationSchema.pre('save', function (next) {
+  if (this.endTime <= this.startTime) {
+    return next(
+      new Error('La hora de fin debe ser posterior a la hora de inicio')
+    );
+  }
+  next();
 });
+
+reservationSchema.statics.findConflictingReservations = function (
+  fieldId,
+  startTime,
+  endTime,
+  excludeId = null
+) {
+  const query = {
+    fieldId,
+    status: { $in: ['CONFIRMED', 'PENDING'] },
+    $or: [
+      {
+        startTime: { $lt: endTime },
+        endTime: { $gt: startTime },
+      },
+    ],
+  };
+
+  if (excludeId) {
+    query._id = { $ne: excludeId };
+  }
+
+  return this.find(query);
+};
+
+export default mongoose.model('Reservation', reservationSchema);

@@ -1,6 +1,6 @@
 'use strict';
 
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const fieldSchema = new mongoose.Schema({
     fieldName: {
@@ -11,44 +11,46 @@ const fieldSchema = new mongoose.Schema({
     },
     fieldType: {
         type: String,
-        required: [true, 'El tipo de campo es obligatorio'],
+        required: [true, 'El tipo de campo es requerido'],
+        // enum: valores permitidos
         enum: {
             values: ['NATURAL', 'SINTETICA', 'CONCRETO'],
+            message: 'Tipo de superficie no válida',
         },
     },
     capacity: {
         type: String,
-        required: [true, 'La capacidad del campo es obligatoria'],
+        required: [true, 'La capacidad es requerida'],
         enum: {
             values: ['FUTBOL_5', 'FUTBOL_7', 'FUTBOL_11'],
-            message: 'Capacidad no valida',
+            message: 'Capacidad no válida',
         },
     },
     pricePerHour: {
         type: Number,
-        required: [true, 'El precio por hora es obligatorio'],
-        min: [0, 'El precio por hora no puede ser negativo'],
+        required: [true, 'El precio por hora es requerido'],
+        min: [0, 'El precio debe ser mayor o igual a 0'],
     },
     description: {
         type: String,
         trim: true,
-        maxLength: [500, 'La descripcion no puede tener mas de 500 caracteres'],
+        maxLength: [500, 'La descripción no puede exceder 500 caracteres'],
     },
     photo: {
         type: String,
-        //valor por defecto
-        default: 'fields/kinal_sport_nyvxo5',
+        // valor por defecto
+        default: 'fields/kinal_sports_nyvxo5',
     },
     isActive: {
         type: Boolean,
         default: true,
     },
-});
+})
 
-// Indices para optimizar la busqueda
-fieldSchema.index({isActive: 1});
-fieldSchema.index({fieldName: 1});
-fieldSchema.index({fieldName: 1, isActive: 1});
+// Indices para optimizar las busquedas
+fieldSchema.index({ isActive: 1 });
+fieldSchema.index({ fieldName: 1 });
+fieldSchema.index({ fieldName: 1, isActive: 1 });
 
-//exportamos el modelo con el nombre Field
+// exportamos el modelo con el nombre Field
 export default mongoose.model('Field', fieldSchema);

@@ -6,9 +6,13 @@ import cors from 'cors';
 import morgan from 'morgan';
 import { corsOptions } from './cors-configuration.js';
 import { version } from 'mongoose';
+import { errorHandler } from '../middlewares/handle-errors.js';
 
 //Rutas
-import fieldRoutes from '../src/fields/field.router.js'
+import fieldRoutes from '../src/fields/field.router.js';
+import reservationRoutes from '../src/reservations/reservation.routes.js';
+import teamRoutes from '../src/teams/team.routes.js';
+import tournamentRoutes from '../src/tournaments/tournaments.routes.js';
 import { dbConnection } from './db.js';
 
 const BASE_URL = '/kinalSportAdmin/v1';
@@ -28,6 +32,9 @@ const middlewares = (app) => {
 //Integracion de todas las rutas
 const routes = (app) => {
     app.use(`${BASE_URL}/fields`, fieldRoutes);
+    app.use(`${BASE_URL}/reservations`, reservationRoutes);
+    app.use(`${BASE_URL}/teams`, teamRoutes);
+    app.use(`${BASE_URL}/tournaments`, tournamentRoutes);
 }
 
 //funcion para iniciar el servidor
@@ -35,12 +42,13 @@ const initServer = async (app) => {
     // Crear la instancia de la aplicacion
     app = express();
     const PORT = process.env.PORT || 3001;
-    
+
     try {
         //Configuracion de los middlewares (Mi aplicaion)
         dbConnection();
         middlewares(app);
         routes(app);
+        app.use(errorHandler)
 
         app.listen(PORT, () => {
             console.log(`Servidor iniciado en el puerto ${PORT}`);
